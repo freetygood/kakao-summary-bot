@@ -1,0 +1,1951 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>카톡요약봇 Ultra v8.0 - AI 스마트 분석 & 자동화</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --secondary: #06b6d4;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --bg-main: #0f172a;
+            --bg-card: rgba(30, 41, 59, 0.5);
+            --bg-card-solid: #1e293b;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --border: rgba(148, 163, 184, 0.2);
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+            --shadow-glow: 0 0 50px rgba(99, 102, 241, 0.3);
+        }
+
+        body.light-theme {
+            --bg-main: #f8fafc;
+            --bg-card: rgba(255, 255, 255, 0.9);
+            --bg-card-solid: #ffffff;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --border: rgba(148, 163, 184, 0.3);
+            --glass-bg: rgba(255, 255, 255, 0.7);
+            --glass-border: rgba(148, 163, 184, 0.2);
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.05); opacity: 0.8; }
+        }
+
+        @keyframes slideIn {
+            0% { transform: translateX(-100%); opacity: 0; }
+            100% { transform: translateX(0); opacity: 1; }
+        }
+
+        @keyframes glow {
+            0%, 100% { box-shadow: 0 0 20px rgba(99, 102, 241, 0.5); }
+            50% { box-shadow: 0 0 40px rgba(99, 102, 241, 0.8), 0 0 60px rgba(99, 102, 241, 0.4); }
+        }
+
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-main);
+            min-height: 100vh;
+            color: var(--text-primary);
+            line-height: 1.6;
+            position: relative;
+            overflow-x: hidden;
+            transition: all 0.3s ease;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(99, 102, 241, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(6, 182, 212, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(168, 85, 247, 0.05) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .floating-shapes {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .shape {
+            position: absolute;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            opacity: 0.1;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .shape:nth-child(1) {
+            width: 80px;
+            height: 80px;
+            top: 10%;
+            left: 10%;
+            animation-delay: 0s;
+        }
+
+        .shape:nth-child(2) {
+            width: 120px;
+            height: 120px;
+            top: 70%;
+            right: 10%;
+            animation-delay: 2s;
+        }
+
+        .shape:nth-child(3) {
+            width: 60px;
+            height: 60px;
+            bottom: 10%;
+            left: 50%;
+            animation-delay: 4s;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 2rem 0;
+            animation: slideIn 1s ease-out;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: glow 3s ease-in-out infinite;
+        }
+
+        .header p {
+            color: var(--text-secondary);
+            font-size: 1.125rem;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: var(--shadow-lg);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+            transition: left 0.5s;
+        }
+
+        .card:hover::before {
+            left: 100%;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-glow);
+            border-color: var(--primary);
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .card-title .icon {
+            font-size: 1.5rem;
+            animation: pulse 2s infinite;
+        }
+
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.625rem 0.875rem;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.875rem;
+            background: var(--glass-bg);
+            color: var(--text-primary);
+            transition: all 0.2s;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+            background: var(--bg-card);
+        }
+
+        .file-upload {
+            border: 2px dashed var(--border);
+            border-radius: 16px;
+            padding: 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: var(--glass-bg);
+        }
+
+        .file-upload:hover {
+            border-color: var(--primary);
+            background: rgba(99, 102, 241, 0.05);
+        }
+
+        .file-upload.dragover {
+            border-color: var(--primary);
+            background: rgba(99, 102, 241, 0.1);
+            transform: scale(1.02);
+        }
+
+        .file-upload-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        .file-upload-text {
+            font-size: 1rem;
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .file-upload-hint {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .btn {
+            padding: 0.625rem 1.25rem;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.5);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .btn:active::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(99, 102, 241, 0.3);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--success), #059669);
+            color: white;
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, var(--warning), #d97706);
+            color: white;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, var(--danger), #dc2626);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: var(--bg-card-solid);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: var(--border);
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 1rem 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--secondary), var(--primary));
+            background-size: 200% 100%;
+            width: 0%;
+            transition: width 0.3s ease;
+            animation: shimmer 2s infinite;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+
+        .stat-card {
+            background: var(--glass-bg);
+            padding: 1rem;
+            border-radius: 12px;
+            text-align: center;
+            border: 1px solid var(--glass-border);
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-3px);
+            border-color: var(--primary);
+        }
+
+        .stat-number {
+            font-size: 1.75rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-top: 0.25rem;
+        }
+
+        .log-output {
+            background: var(--bg-card-solid);
+            color: var(--text-secondary);
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 0.875rem;
+            padding: 1rem;
+            border-radius: 8px;
+            height: 300px;
+            overflow-y: auto;
+            margin-top: 1rem;
+            border: 1px solid var(--border);
+        }
+
+        .log-output::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .log-output::-webkit-scrollbar-track {
+            background: var(--glass-bg);
+            border-radius: 4px;
+        }
+
+        .log-output::-webkit-scrollbar-thumb {
+            background: var(--primary);
+            border-radius: 4px;
+        }
+
+        .log-entry {
+            margin-bottom: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .log-time {
+            color: var(--text-secondary);
+            margin-right: 0.5rem;
+        }
+
+        .log-success { color: var(--success); }
+        .log-error { color: var(--danger); }
+        .log-warning { color: var(--warning); }
+        .log-info { color: var(--text-secondary); }
+
+        .preview-container {
+            background: var(--bg-card-solid);
+            border-radius: 8px;
+            padding: 1rem;
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid var(--border);
+        }
+
+        .ai-insights {
+            background: rgba(99, 102, 241, 0.1);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-left: 3px solid var(--primary);
+        }
+
+        .insight-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.75rem;
+            color: var(--text-primary);
+        }
+
+        .insight-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .insight-icon {
+            margin-right: 0.75rem;
+            font-size: 1.25rem;
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 48px;
+            height: 24px;
+            margin-left: 0.5rem;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--border);
+            transition: 0.4s;
+            border-radius: 24px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: 0.4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(24px);
+        }
+
+        .notification-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+
+        .notification {
+            background: var(--bg-card-solid);
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            box-shadow: var(--shadow-lg);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+            margin-bottom: 1rem;
+            border-left: 3px solid var(--primary);
+            max-width: 350px;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification-success {
+            border-left-color: var(--success);
+        }
+
+        .notification-error {
+            border-left-color: var(--danger);
+        }
+
+        .notification-warning {
+            border-left-color: var(--warning);
+        }
+
+        .theme-toggle {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: var(--shadow-lg);
+            transition: all 0.3s ease;
+            z-index: 100;
+        }
+
+        .theme-toggle:hover {
+            transform: scale(1.1);
+            box-shadow: var(--shadow-glow);
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            border-left: 4px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .file-list {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1rem;
+            background: var(--glass-bg);
+        }
+
+        .file-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.875rem;
+            transition: all 0.2s;
+        }
+
+        .file-item:hover {
+            background: rgba(99, 102, 241, 0.05);
+        }
+
+        .file-item:last-child {
+            border-bottom: none;
+        }
+
+        .file-name {
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .file-size {
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+        }
+
+        .date-range-controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .processing-options {
+            background: var(--glass-bg);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border: 1px solid var(--border);
+        }
+
+        .option-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+        }
+
+        .url-presets {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .preset-btn {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+            background: var(--glass-bg);
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .preset-btn:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        @media (max-width: 768px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+            
+            .container {
+                padding: 1rem;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="floating-shapes">
+        <div class="shape"></div>
+        <div class="shape"></div>
+        <div class="shape"></div>
+    </div>
+
+    <button class="theme-toggle" onclick="toggleTheme()">🌙</button>
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+    </div>
+    <div class="notification-container" id="notificationContainer"></div>
+
+    <div class="container">
+        <div class="header">
+            <h1>🚀 카톡요약봇 Ultra v8.0</h1>
+            <p>AI 기반 카카오톡 스마트 분석 & Claude 자동화 플랫폼 (CSV 지원)</p>
+        </div>
+
+        <div class="dashboard">
+            <!-- 파일 업로드 카드 -->
+            <div class="card">
+                <div class="card-title">
+                    <span class="icon">📱</span>
+                    스마트 파일 업로드
+                </div>
+                
+                <div class="file-upload" id="fileUpload">
+                    <div class="file-upload-icon">📤</div>
+                    <div class="file-upload-text">드래그 & 드롭 또는 클릭</div>
+                    <div class="file-upload-hint">지원: KakaoTalk*.csv, *.txt | 최대 100MB</div>
+                    <input type="file" id="fileInput" accept=".txt,.csv" style="display: none;">
+                </div>
+
+                <div id="fileInfo" style="display: none; margin-top: 1rem;">
+                    <div class="ai-insights" id="fileDetails"></div>
+                </div>
+            </div>
+
+            <!-- AI 인사이트 카드 -->
+            <div class="card">
+                <div class="card-title">
+                    <span class="icon">🧠</span>
+                    AI 스마트 분석
+                </div>
+                
+                <div class="ai-insights" id="aiInsights">
+                    <div class="insight-item">
+                        <span class="insight-icon">📊</span>
+                        <span>파일을 업로드하면 AI 분석이 시작됩니다</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">분석 레벨</label>
+                    <select class="form-control" id="analysisLevel">
+                        <option value="basic">기본 분석</option>
+                        <option value="detailed" selected>상세 분석</option>
+                        <option value="deep">딥 러닝 분석</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- 실시간 미리보기 카드 -->
+            <div class="card">
+                <div class="card-title">
+                    <span class="icon">👁️</span>
+                    실시간 미리보기
+                </div>
+
+                <div class="preview-container" id="previewContainer">
+                    <div style="color: var(--primary);">대기 중...</div>
+                </div>
+
+                <div style="margin-top: 1rem;">
+                    <label style="display: flex; align-items: center; color: var(--text-primary);">
+                        실시간 업데이트
+                        <div class="toggle-switch">
+                            <input type="checkbox" id="realtimeToggle" checked>
+                            <span class="slider"></span>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <!-- 고급 설정 카드 -->
+            <div class="card">
+                <div class="card-title">
+                    <span class="icon">⚙️</span>
+                    고급 설정 & 제어
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Claude 프로젝트 URL</label>
+                    <input type="url" id="claudeUrl" class="form-control" 
+                           placeholder="https://claude.ai/project/your-project-id">
+                    <div class="url-presets">
+                        <button class="preset-btn" onclick="loadUrlPreset(0)">기본값</button>
+                        <div id="savedUrlButtons"></div>
+                        <button class="preset-btn" onclick="saveCurrentUrl()">+ 현재 URL 저장</button>
+                    </div>
+                    <small style="color: var(--text-secondary); font-size: 0.75rem; margin-top: 0.25rem; display: block;">
+                        💡 팁: URL을 저장하면 나중에 빠르게 선택할 수 있습니다
+                    </small>
+                </div>
+
+                <div class="date-range-controls">
+                    <div class="form-group">
+                        <label class="form-label">시작 날짜</label>
+                        <input type="date" id="startDate" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">종료 날짜</label>
+                        <input type="date" id="endDate" class="form-control">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">분할 크기 (메시지 수)</label>
+                    <input type="range" id="splitSize" class="form-control" 
+                           min="500" max="5000" value="2000" step="100">
+                    <div style="text-align: center; margin-top: 0.5rem;">
+                        <span id="splitSizeValue" style="font-weight: 600; color: var(--primary);">2000</span> 메시지
+                    </div>
+                </div>
+
+                <div class="processing-options">
+                    <div class="option-item">
+                        <span>스마트 분할 (권장)</span>
+                        <div class="toggle-switch">
+                            <input type="checkbox" id="smartSplit" checked>
+                            <span class="slider"></span>
+                        </div>
+                    </div>
+                    <div class="option-item">
+                        <span>터보 모드 (빠른 처리)</span>
+                        <div class="toggle-switch">
+                            <input type="checkbox" id="turboMode">
+                            <span class="slider"></span>
+                        </div>
+                    </div>
+                    <div class="option-item">
+                        <span>자동 브라우저 열기</span>
+                        <div class="toggle-switch">
+                            <input type="checkbox" id="autoBrowser" checked>
+                            <span class="slider"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">자동 처리 모드</label>
+                    <select class="form-control" id="processingMode">
+                        <option value="single">단일 날짜 처리</option>
+                        <option value="batch">전체 날짜 자동 처리</option>
+                        <option value="sequential">날짜별 순차 처리</option>
+                    </select>
+                    <small style="color: var(--text-secondary); font-size: 0.75rem; margin-top: 0.25rem; display: block;">
+                        💡 순차 처리: 각 날짜마다 새 Claude 탭 자동 생성
+                    </small>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-top: 1rem;">
+                    <button class="btn btn-primary" id="processBtn" disabled>
+                        <span>🚀</span>
+                        <span id="processBtnText">Ultra 처리 시작</span>
+                    </button>
+                    <button class="btn btn-warning" onclick="openClaudeManually()">
+                        <span>🌐</span>
+                        Claude 수동 열기
+                    </button>
+                </div>
+            </div>
+
+            <!-- 실시간 통계 카드 -->
+            <div class="card">
+                <div class="card-title">
+                    <span class="icon">📊</span>
+                    실시간 통계 대시보드
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-number" id="totalMessages">0</div>
+                        <div class="stat-label">총 메시지</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="activeUsers">0</div>
+                        <div class="stat-label">참여자 수</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="dateCount">0</div>
+                        <div class="stat-label">날짜 수</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="fileCount">0</div>
+                        <div class="stat-label">생성 파일</div>
+                    </div>
+                </div>
+
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressBar"></div>
+                </div>
+
+                <div style="text-align: center; color: var(--text-secondary); margin-top: 0.5rem;">
+                    <span id="statusText">대기 중...</span>
+                </div>
+            </div>
+
+            <!-- 고급 로그 뷰어 카드 -->
+            <div class="card" style="grid-column: 1 / -1;">
+                <div class="card-title">
+                    <span class="icon">📋</span>
+                    고급 로그 뷰어 & 제어판
+                </div>
+
+                <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap;">
+                    <button class="btn btn-success" id="downloadBtn" disabled>
+                        <span>💾</span>
+                        파일 다운로드
+                    </button>
+                    <button class="btn btn-warning" onclick="copyToClipboard()">
+                        <span>📋</span>
+                        클립보드 복사
+                    </button>
+                    <button class="btn btn-danger" onclick="resetAll()">
+                        <span>🔄</span>
+                        완전 초기화
+                    </button>
+                </div>
+
+                <div class="log-output" id="logOutput">
+                    <div class="log-entry log-info">
+                        <span class="log-time">[시스템]</span>
+                        🎯 카톡요약봇 Ultra v8.0 준비 완료!
+                    </div>
+                    <div class="log-entry log-info">
+                        <span class="log-time">[시스템]</span>
+                        파일을 업로드하여 시작하세요. (CSV/TXT 지원)
+                    </div>
+                </div>
+            </div>
+
+            <!-- 생성된 파일 목록 카드 -->
+            <div class="card" style="grid-column: 1 / -1; display: none;" id="fileListCard">
+                <div class="card-title">
+                    <span class="icon">📄</span>
+                    생성된 파일 목록
+                </div>
+                
+                <div class="file-list" id="fileList"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 전역 변수
+        let uploadedFile = null;
+        let processedFiles = [];
+        let fileContent = '';
+        let messagesByDate = {};
+        let processingStartTime = null;
+        let currentTheme = 'dark';
+        let clipboardContent = '';
+        let participantsList = new Set();
+        let savedUrls = [];
+
+        // DOM 요소
+        const elements = {
+            fileUpload: document.getElementById('fileUpload'),
+            fileInput: document.getElementById('fileInput'),
+            fileInfo: document.getElementById('fileInfo'),
+            fileDetails: document.getElementById('fileDetails'),
+            startDate: document.getElementById('startDate'),
+            endDate: document.getElementById('endDate'),
+            splitSize: document.getElementById('splitSize'),
+            splitSizeValue: document.getElementById('splitSizeValue'),
+            processBtn: document.getElementById('processBtn'),
+            downloadBtn: document.getElementById('downloadBtn'),
+            progressBar: document.getElementById('progressBar'),
+            logOutput: document.getElementById('logOutput'),
+            fileList: document.getElementById('fileList'),
+            fileListCard: document.getElementById('fileListCard'),
+            totalMessages: document.getElementById('totalMessages'),
+            activeUsers: document.getElementById('activeUsers'),
+            dateCount: document.getElementById('dateCount'),
+            fileCount: document.getElementById('fileCount'),
+            statusText: document.getElementById('statusText'),
+            aiInsights: document.getElementById('aiInsights'),
+            previewContainer: document.getElementById('previewContainer'),
+            loadingOverlay: document.getElementById('loadingOverlay'),
+            claudeUrl: document.getElementById('claudeUrl'),
+            analysisLevel: document.getElementById('analysisLevel'),
+            realtimeToggle: document.getElementById('realtimeToggle'),
+            smartSplit: document.getElementById('smartSplit'),
+            turboMode: document.getElementById('turboMode'),
+            autoBrowser: document.getElementById('autoBrowser'),
+            processingMode: document.getElementById('processingMode'),
+            processBtnText: document.getElementById('processBtnText'),
+            savedUrlButtons: document.getElementById('savedUrlButtons')
+        };
+
+        // 초기화
+        document.addEventListener('DOMContentLoaded', () => {
+            setupEventListeners();
+            setDefaultDates();
+            loadSettings();
+            initTheme();
+            loadSavedUrls();
+        });
+
+        function setupEventListeners() {
+            // 파일 업로드 이벤트
+            elements.fileUpload.addEventListener('click', () => elements.fileInput.click());
+            elements.fileUpload.addEventListener('dragover', handleDragOver);
+            elements.fileUpload.addEventListener('dragleave', handleDragLeave);
+            elements.fileUpload.addEventListener('drop', handleDrop);
+            elements.fileInput.addEventListener('change', handleFileChange);
+
+            // 슬라이더 이벤트
+            elements.splitSize.addEventListener('input', (e) => {
+                elements.splitSizeValue.textContent = e.target.value;
+            });
+
+            // 처리 버튼
+            elements.processBtn.addEventListener('click', processFile);
+            elements.downloadBtn.addEventListener('click', downloadAllFiles);
+        }
+
+        function setDefaultDates() {
+            const today = new Date();
+            const oneMonthAgo = new Date(today);
+            oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+            
+            elements.startDate.value = oneMonthAgo.toISOString().split('T')[0];
+            elements.endDate.value = today.toISOString().split('T')[0];
+        }
+
+        // URL 관련 함수들
+        function loadSavedUrls() {
+            try {
+                const saved = localStorage.getItem('savedClaudeUrls');
+                if (saved) {
+                    savedUrls = JSON.parse(saved);
+                    updateUrlButtons();
+                }
+            } catch (e) {
+                console.log('URL 로드 실패:', e);
+            }
+        }
+
+        function updateUrlButtons() {
+            elements.savedUrlButtons.innerHTML = '';
+            savedUrls.forEach((url, index) => {
+                const btn = document.createElement('button');
+                btn.className = 'preset-btn';
+                btn.textContent = url.name || `URL ${index + 1}`;
+                btn.onclick = () => loadUrlPreset(index + 1);
+                elements.savedUrlButtons.appendChild(btn);
+            });
+        }
+
+        function saveCurrentUrl() {
+            const currentUrl = elements.claudeUrl.value.trim();
+            if (!currentUrl) {
+                showNotification('URL을 먼저 입력하세요', 'warning');
+                return;
+            }
+
+            const name = prompt('이 URL의 이름을 입력하세요:', `프로젝트 ${savedUrls.length + 1}`);
+            if (name) {
+                savedUrls.push({ name, url: currentUrl });
+                try {
+                    localStorage.setItem('savedClaudeUrls', JSON.stringify(savedUrls));
+                    updateUrlButtons();
+                    showNotification(`"${name}" URL이 저장되었습니다`, 'success');
+                } catch (e) {
+                    console.log('URL 저장 실패:', e);
+                }
+            }
+        }
+
+        function loadUrlPreset(index) {
+            if (index === 0) {
+                elements.claudeUrl.value = 'https://claude.ai';
+            } else if (savedUrls[index - 1]) {
+                elements.claudeUrl.value = savedUrls[index - 1].url;
+                showNotification(`"${savedUrls[index - 1].name}" URL 로드됨`, 'info');
+            }
+        }
+
+        // 파일 업로드 핸들러
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            elements.fileUpload.classList.add('dragover');
+        }
+
+        function handleDragLeave(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            elements.fileUpload.classList.remove('dragover');
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            elements.fileUpload.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFileSelect(files[0]);
+            }
+        }
+
+        function handleFileChange(e) {
+            if (e.target.files.length > 0) {
+                handleFileSelect(e.target.files[0]);
+            }
+        }
+
+        async function handleFileSelect(file) {
+            showLoading(true);
+            uploadedFile = file;
+            
+            try {
+                // 파일 내용 읽기
+                fileContent = await file.text();
+                
+                // CSV 파일인 경우 변환 처리
+                if (file.name.toLowerCase().endsWith('.csv')) {
+                    fileContent = convertCsvToText(fileContent);
+                }
+                
+                // AI 분석 수행
+                performAIAnalysis(file);
+                
+                // 날짜 범위 자동 감지
+                detectDateRange(fileContent);
+                
+                // 실시간 미리보기
+                if (elements.realtimeToggle.checked) {
+                    updatePreview(fileContent);
+                }
+                
+                elements.processBtn.disabled = false;
+                logMessage('파일이 성공적으로 로드되었습니다.', 'success');
+                showNotification('파일 업로드 완료! AI 분석 중...', 'success');
+                
+            } catch (error) {
+                logMessage(`파일 읽기 오류: ${error.message}`, 'error');
+                showNotification('파일을 읽을 수 없습니다.', 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // CSV를 텍스트 형식으로 변환하는 함수
+        function convertCsvToText(csvContent) {
+            const lines = csvContent.split('\n');
+            let convertedText = '';
+            let isHeader = true;
+            
+            for (let line of lines) {
+                if (isHeader) {
+                    // 첫 줄이 헤더인 경우 건너뛰기
+                    if (line.includes('Date') || line.includes('날짜') || line.includes('User') || line.includes('사용자')) {
+                        isHeader = false;
+                        continue;
+                    }
+                }
+                
+                // CSV 각 줄 파싱
+                const parts = parseCSVLine(line);
+                if (parts.length >= 3) {
+                    // 날짜, 사용자, 메시지 형식으로 재구성
+                    const date = parts[0];
+                    const user = parts[1];
+                    const message = parts[2];
+                    
+                    if (date && user && message) {
+                        // 카카오톡 형식으로 변환
+                        convertedText += `${date}, ${user} : ${message}\n`;
+                    }
+                }
+            }
+            
+            return convertedText;
+        }
+
+        // CSV 라인 파싱 함수
+        function parseCSVLine(line) {
+            const parts = [];
+            let current = '';
+            let inQuotes = false;
+            
+            for (let i = 0; i < line.length; i++) {
+                const char = line[i];
+                
+                if (char === '"') {
+                    inQuotes = !inQuotes;
+                } else if (char === ',' && !inQuotes) {
+                    parts.push(current.trim());
+                    current = '';
+                } else {
+                    current += char;
+                }
+            }
+            
+            if (current) {
+                parts.push(current.trim());
+            }
+            
+            return parts;
+        }
+
+        // AI 분석 기능
+        function performAIAnalysis(file) {
+            const lines = fileContent.split('\n');
+            const analysisLevel = elements.analysisLevel.value;
+            
+            // 참여자 추출 - 다양한 패턴 지원
+            participantsList.clear();
+            const patterns = [
+                /(?:오전|오후)\s+\d{1,2}:\d{2},\s+(.+?)\s*:/,
+                /\d{4}\.\s*\d{1,2}\.\s*\d{1,2}\.\s*.*?(?:오전|오후)\s+\d{1,2}:\d{2},\s+(.+?)\s*:/,
+                /\[.+?\]\s+\[(.+?)\]/,
+                /^(.+?)\s*:/
+            ];
+            
+            lines.forEach(line => {
+                for (let pattern of patterns) {
+                    const match = line.match(pattern);
+                    if (match && match[1]) {
+                        participantsList.add(match[1].trim());
+                        break;
+                    }
+                }
+            });
+
+            // 파일 정보 표시
+            elements.fileDetails.innerHTML = `
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div>
+                        <strong>파일명:</strong><br>${file.name}
+                    </div>
+                    <div>
+                        <strong>크기:</strong><br>${formatFileSize(file.size)}
+                    </div>
+                    <div>
+                        <strong>라인 수:</strong><br>${lines.length.toLocaleString()}
+                    </div>
+                    <div>
+                        <strong>형식:</strong><br>${file.name.endsWith('.csv') ? 'CSV' : 'TXT'}
+                    </div>
+                </div>
+            `;
+            elements.fileInfo.style.display = 'block';
+
+            // AI 인사이트 업데이트
+            const insights = [];
+            
+            if (participantsList.size > 0) {
+                insights.push({
+                    icon: '👥',
+                    text: `${participantsList.size}명의 참여자 감지`
+                });
+            }
+
+            insights.push({
+                icon: '📊',
+                text: `약 ${Math.floor(lines.length * 0.7)}개 메시지 예상`
+            });
+
+            if (file.name.endsWith('.csv')) {
+                insights.push({
+                    icon: '📁',
+                    text: 'CSV 파일 자동 변환 완료'
+                });
+            }
+
+            elements.aiInsights.innerHTML = insights.map(insight => `
+                <div class="insight-item">
+                    <span class="insight-icon">${insight.icon}</span>
+                    <span>${insight.text}</span>
+                </div>
+            `).join('');
+
+            elements.activeUsers.textContent = participantsList.size;
+            
+            logMessage(`AI 분석 완료: ${participantsList.size}명 참여자, ${lines.length}줄`, 'info');
+        }
+
+        // 날짜 범위 자동 감지
+        function detectDateRange(content) {
+            const patterns = [
+                /(\d{4})\.\s*(\d{1,2})\.\s*(\d{1,2})\./g,
+                /(\d{4})년\s*(\d{1,2})월\s*(\d{1,2})일/g,
+                /(\d{4})-(\d{2})-(\d{2})/g,
+                /(\d{4})\/(\d{2})\/(\d{2})/g
+            ];
+            
+            const dates = [];
+            
+            for (const pattern of patterns) {
+                let match;
+                pattern.lastIndex = 0;
+                
+                while ((match = pattern.exec(content)) !== null) {
+                    const date = new Date(match[1], match[2] - 1, match[3]);
+                    if (!isNaN(date.getTime())) {
+                        dates.push(date);
+                    }
+                }
+            }
+            
+            if (dates.length > 0) {
+                dates.sort((a, b) => a - b);
+                const startDate = dates[0];
+                const endDate = dates[dates.length - 1];
+                
+                elements.startDate.value = formatDateForInput(startDate);
+                elements.endDate.value = formatDateForInput(endDate);
+                
+                logMessage(`날짜 범위 감지: ${formatDate(startDate)} ~ ${formatDate(endDate)}`, 'info');
+            }
+        }
+
+        // 실시간 미리보기
+        function updatePreview(content) {
+            const lines = content.split('\n').slice(0, 10);
+            let preview = '<div style="color: var(--primary);">📄 파일 미리보기 (처음 10줄)</div><br>';
+            
+            lines.forEach((line, i) => {
+                const truncated = line.length > 80 ? line.substring(0, 80) + '...' : line;
+                preview += `<div style="margin: 2px 0;">${i + 1}: ${escapeHtml(truncated)}</div>`;
+            });
+            
+            elements.previewContainer.innerHTML = preview;
+        }
+
+        // 파일 처리
+        async function processFile() {
+            if (!fileContent) return;
+            
+            processingStartTime = Date.now();
+            processedFiles = [];
+            messagesByDate = {};
+            clipboardContent = '';
+            
+            elements.processBtn.disabled = true;
+            elements.downloadBtn.disabled = true;
+            
+            showLoading(true);
+            logMessage('🚀 처리를 시작합니다...', 'info');
+            
+            try {
+                // 1. 날짜별로 메시지 분류
+                await parseMessagesByDate();
+                
+                // 2. 날짜 필터링
+                filterByDateRange();
+                
+                // 3. 각 날짜별로 파일 생성
+                await createFiles();
+                
+                // 4. Claude 자동화 처리
+                await handleClaudeIntegration();
+                
+                // 완료
+                await finishProcessing();
+                
+            } catch (error) {
+                logMessage(`처리 오류: ${error.message}`, 'error');
+                showNotification('처리 중 오류가 발생했습니다.', 'error');
+            } finally {
+                elements.processBtn.disabled = false;
+                showLoading(false);
+                updateProgress(100);
+            }
+        }
+
+        // 날짜별로 메시지 파싱 (개선된 버전)
+        async function parseMessagesByDate() {
+            const lines = fileContent.split('\n');
+            let currentDate = null;
+            let currentMessages = [];
+            let messageCount = 0;
+            
+            // 다양한 카카오톡 형식 지원 (CSV 변환 형식 포함)
+            const patterns = [
+                // 일반 카카오톡 형식
+                /^(\d{4})\.\s*(\d{1,2})\.\s*(\d{1,2})\.\s*.*?(?:오전|오후)\s+(\d{1,2}):(\d{2}),\s+(.+?)\s*:\s*(.*)$/,
+                // CSV 변환 형식
+                /^(\d{4})\.\s*(\d{1,2})\.\s*(\d{1,2})\.\s*(?:오전|오후)\s+(\d{1,2}):(\d{2}),\s+(.+?)\s*:\s*(.*)$/,
+                // 간단한 형식
+                /^(\d{4})-(\d{2})-(\d{2})\s+(\d{2}):(\d{2}),\s+(.+?)\s*:\s*(.*)$/,
+                // 날짜 시간 형식
+                /^(\d{4})\/(\d{2})\/(\d{2})\s+(\d{2}):(\d{2}),\s+(.+?)\s*:\s*(.*)$/
+            ];
+            
+            // 패턴 매칭
+            let matchedPattern = null;
+            for (const pattern of patterns) {
+                for (let i = 0; i < Math.min(100, lines.length); i++) {
+                    if (lines[i].match(pattern)) {
+                        matchedPattern = pattern;
+                        logMessage(`카카오톡 형식 감지: 패턴 ${patterns.indexOf(pattern) + 1}`, 'info');
+                        break;
+                    }
+                }
+                if (matchedPattern) break;
+            }
+            
+            if (!matchedPattern) {
+                logMessage('카카오톡 메시지 형식을 찾을 수 없습니다.', 'error');
+                logMessage('파일 형식을 확인하거나 CSV 파일을 사용해보세요.', 'warning');
+                return;
+            }
+            
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i];
+                if (!line || line.trim() === '') continue;
+                
+                const match = line.match(matchedPattern);
+                if (match) {
+                    const year = match[1];
+                    const month = match[2].padStart(2, '0');
+                    const day = match[3].padStart(2, '0');
+                    const dateKey = `${year}-${month}-${day}`;
+                    
+                    if (dateKey !== currentDate) {
+                        if (currentDate && currentMessages.length > 0) {
+                            if (!messagesByDate[currentDate]) {
+                                messagesByDate[currentDate] = [];
+                            }
+                            messagesByDate[currentDate] = messagesByDate[currentDate].concat(currentMessages);
+                        }
+                        currentDate = dateKey;
+                        currentMessages = [];
+                    }
+                    
+                    currentMessages.push(line);
+                    messageCount++;
+                } else if (currentMessages.length > 0) {
+                    // 이어지는 메시지 처리
+                    currentMessages[currentMessages.length - 1] += '\n' + line;
+                }
+                
+                // 진행률 업데이트
+                if (i % 1000 === 0) {
+                    updateProgress((i / lines.length) * 30);
+                    elements.statusText.textContent = `파싱 중... ${Math.round((i / lines.length) * 100)}%`;
+                    await delay(10);
+                }
+            }
+            
+            // 마지막 날짜 처리
+            if (currentDate && currentMessages.length > 0) {
+                if (!messagesByDate[currentDate]) {
+                    messagesByDate[currentDate] = [];
+                }
+                messagesByDate[currentDate] = messagesByDate[currentDate].concat(currentMessages);
+            }
+            
+            elements.totalMessages.textContent = messageCount.toLocaleString();
+            logMessage(`${Object.keys(messagesByDate).length}개 날짜에서 ${messageCount}개 메시지 파싱 완료`, 'info');
+        }
+
+        // 날짜 범위 필터링
+        function filterByDateRange() {
+            const startDate = new Date(elements.startDate.value);
+            const endDate = new Date(elements.endDate.value);
+            endDate.setHours(23, 59, 59, 999);
+            
+            const filteredDates = {};
+            let filteredCount = 0;
+            
+            for (const dateKey in messagesByDate) {
+                const date = new Date(dateKey);
+                if (date >= startDate && date <= endDate) {
+                    filteredDates[dateKey] = messagesByDate[dateKey];
+                    filteredCount += messagesByDate[dateKey].length;
+                }
+            }
+            
+            messagesByDate = filteredDates;
+            elements.dateCount.textContent = Object.keys(messagesByDate).length;
+            
+            logMessage(`날짜 필터링: ${Object.keys(messagesByDate).length}개 날짜, ${filteredCount}개 메시지`, 'info');
+        }
+
+        // 파일 생성
+        async function createFiles() {
+            const splitSize = parseInt(elements.splitSize.value);
+            const smartSplit = elements.smartSplit.checked;
+            const dates = Object.keys(messagesByDate).sort();
+            let totalFiles = 0;
+            
+            elements.fileListCard.style.display = 'block';
+            elements.fileList.innerHTML = '';
+            
+            for (let i = 0; i < dates.length; i++) {
+                const date = dates[i];
+                const messages = messagesByDate[date];
+                
+                elements.statusText.textContent = `${date} 처리 중...`;
+                
+                if (!smartSplit || messages.length <= splitSize) {
+                    // 하나의 파일로 생성
+                    const fileName = `${date}.txt`;
+                    const content = messages.join('\n');
+                    const file = {
+                        name: fileName,
+                        content: content,
+                        size: new Blob([content]).size,
+                        messageCount: messages.length
+                    };
+                    
+                    processedFiles.push(file);
+                    addFileToList(file);
+                    totalFiles++;
+                    
+                    // 첫 번째 파일을 클립보드용으로 저장
+                    if (totalFiles === 1) {
+                        clipboardContent = content;
+                    }
+                    
+                } else {
+                    // 여러 파트로 분할
+                    const parts = Math.ceil(messages.length / splitSize);
+                    
+                    for (let part = 0; part < parts; part++) {
+                        const startIdx = part * splitSize;
+                        const endIdx = Math.min((part + 1) * splitSize, messages.length);
+                        const partMessages = messages.slice(startIdx, endIdx);
+                        
+                        const fileName = `${date}_Part${part + 1}.txt`;
+                        const content = partMessages.join('\n');
+                        const file = {
+                            name: fileName,
+                            content: content,
+                            size: new Blob([content]).size,
+                            messageCount: partMessages.length
+                        };
+                        
+                        processedFiles.push(file);
+                        addFileToList(file);
+                        totalFiles++;
+                        
+                        if (totalFiles === 1) {
+                            clipboardContent = content;
+                        }
+                    }
+                }
+                
+                updateProgress(30 + ((i + 1) / dates.length) * 70);
+                logMessage(`${date}: ${messages.length}개 메시지 → ${messages.length <= splitSize ? 1 : Math.ceil(messages.length / splitSize)}개 파일`, 'info');
+                
+                await delay(10);
+            }
+            
+            elements.fileCount.textContent = totalFiles;
+            elements.statusText.textContent = '처리 완료!';
+        }
+
+        // 파일 목록에 추가
+        function addFileToList(file) {
+            const fileItem = document.createElement('div');
+            fileItem.className = 'file-item';
+            fileItem.innerHTML = `
+                <div>
+                    <div class="file-name">${file.name}</div>
+                    <div class="file-size">${formatFileSize(file.size)} • ${file.messageCount}개 메시지</div>
+                </div>
+                <button class="btn btn-secondary" onclick="downloadSingleFile('${file.name}')">
+                    <span>💾</span>
+                </button>
+            `;
+            elements.fileList.appendChild(fileItem);
+        }
+
+        // Claude 통합 처리
+        async function handleClaudeIntegration() {
+            if (elements.autoBrowser.checked) {
+                const claudeUrl = elements.claudeUrl.value.trim() || 'https://claude.ai';
+                
+                try {
+                    const newWindow = window.open(claudeUrl, '_blank');
+                    if (newWindow) {
+                        logMessage('✅ Claude 탭이 열렸습니다', 'success');
+                        showNotification('Claude가 새 탭에서 열렸습니다!', 'success');
+                    } else {
+                        logMessage('⚠️ 팝업 차단됨 - 브라우저 설정을 확인하세요', 'warning');
+                    }
+                } catch (error) {
+                    logMessage(`Claude 열기 실패: ${error.message}`, 'error');
+                }
+            }
+            
+            // 클립보드에 첫 번째 청크 복사
+            if (clipboardContent) {
+                try {
+                    await navigator.clipboard.writeText(clipboardContent);
+                    logMessage('📋 클립보드에 복사 완료! Claude에 붙여넣기하세요.', 'success');
+                    showNotification('첫 번째 청크가 클립보드에 복사되었습니다! Ctrl+V로 붙여넣기하세요.', 'success');
+                } catch (error) {
+                    logMessage('클립보드 API 실패, 대체 방법 시도...', 'warning');
+                    fallbackCopyToClipboard(clipboardContent);
+                }
+            }
+        }
+
+        // 처리 완료
+        async function finishProcessing() {
+            const processingTime = ((Date.now() - processingStartTime) / 1000).toFixed(1);
+            
+            logMessage(`✅ 처리 완료! ${processedFiles.length}개 파일 생성 (${processingTime}초)`, 'success');
+            showNotification('모든 처리가 완료되었습니다!', 'success');
+            
+            elements.downloadBtn.disabled = false;
+            
+            // 설정 저장
+            saveSettings();
+        }
+
+        // 파일 다운로드 함수들
+        async function downloadAllFiles() {
+            if (processedFiles.length === 0) return;
+            
+            logMessage('파일 다운로드 준비 중...', 'info');
+            
+            if (processedFiles.length === 1) {
+                downloadSingleFile(processedFiles[0].name);
+            } else {
+                // 여러 파일을 순차적으로 다운로드
+                for (let i = 0; i < processedFiles.length; i++) {
+                    downloadSingleFile(processedFiles[i].name);
+                    await delay(500);
+                }
+                showNotification('모든 파일이 다운로드되었습니다!', 'success');
+            }
+        }
+
+        function downloadSingleFile(fileName) {
+            const file = processedFiles.find(f => f.name === fileName);
+            if (!file) return;
+            
+            const BOM = '\uFEFF';
+            const blob = new Blob([BOM + file.content], { type: 'text/plain;charset=utf-8' });
+            downloadBlob(blob, file.name);
+        }
+
+        function downloadBlob(blob, filename) {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            setTimeout(() => URL.revokeObjectURL(url), 100);
+        }
+
+        // 클립보드 복사
+        async function copyToClipboard() {
+            try {
+                let textToCopy = '';
+                
+                if (clipboardContent) {
+                    textToCopy = clipboardContent;
+                } else if (processedFiles.length > 0) {
+                    textToCopy = processedFiles[0].content;
+                } else {
+                    textToCopy = elements.logOutput.innerText;
+                }
+                
+                await navigator.clipboard.writeText(textToCopy);
+                showNotification('클립보드에 복사되었습니다!', 'success');
+                logMessage('📋 클립보드 복사 완료', 'success');
+            } catch (error) {
+                fallbackCopyToClipboard(textToCopy);
+            }
+        }
+
+        // 클립보드 복사 대체 방법
+        function fallbackCopyToClipboard(text) {
+            const textArea = document.createElement('textarea');
+            textArea.value = text;
+            textArea.style.position = 'fixed';
+            textArea.style.opacity = '0';
+            
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            
+            try {
+                document.execCommand('copy');
+                showNotification('클립보드에 복사되었습니다!', 'success');
+                logMessage('📋 클립보드 복사 완료 (대체 방법)', 'success');
+            } catch (err) {
+                logMessage('클립보드 복사 실패', 'error');
+                showNotification('수동으로 복사해주세요.', 'warning');
+            }
+            
+            document.body.removeChild(textArea);
+        }
+
+        // 초기화
+        function resetAll() {
+            if (!confirm('모든 데이터를 초기화하시겠습니까?')) return;
+            
+            uploadedFile = null;
+            processedFiles = [];
+            fileContent = '';
+            messagesByDate = {};
+            clipboardContent = '';
+            participantsList.clear();
+            
+            elements.fileInfo.style.display = 'none';
+            elements.fileListCard.style.display = 'none';
+            elements.fileList.innerHTML = '';
+            elements.processBtn.disabled = true;
+            elements.downloadBtn.disabled = true;
+            
+            elements.totalMessages.textContent = '0';
+            elements.activeUsers.textContent = '0';
+            elements.dateCount.textContent = '0';
+            elements.fileCount.textContent = '0';
+            elements.statusText.textContent = '대기 중...';
+            
+            elements.aiInsights.innerHTML = `
+                <div class="insight-item">
+                    <span class="insight-icon">📊</span>
+                    <span>파일을 업로드하면 AI 분석이 시작됩니다</span>
+                </div>
+            `;
+            
+            elements.previewContainer.innerHTML = '<div style="color: var(--primary);">대기 중...</div>';
+            
+            updateProgress(0);
+            setDefaultDates();
+            
+            elements.logOutput.innerHTML = `
+                <div class="log-entry log-info">
+                    <span class="log-time">[시스템]</span>
+                    🎯 카톡요약봇 Ultra v8.0 초기화 완료!
+                </div>
+            `;
+            
+            showNotification('초기화되었습니다.', 'success');
+        }
+
+        // Claude 수동 열기
+        function openClaudeManually() {
+            const claudeUrl = elements.claudeUrl.value.trim() || 'https://claude.ai';
+            
+            try {
+                const newWindow = window.open(claudeUrl, '_blank');
+                
+                if (newWindow) {
+                    logMessage('🌐 Claude가 새 탭에서 열렸습니다', 'success');
+                    showNotification('Claude가 열렸습니다! 클립보드 내용을 붙여넣으세요.', 'success');
+                    
+                    // 클립보드에 내용이 있으면 복사 시도
+                    if (clipboardContent || (processedFiles.length > 0)) {
+                        setTimeout(() => {
+                            copyToClipboard();
+                        }, 500);
+                    }
+                } else {
+                    showNotification('팝업이 차단되었습니다. 브라우저 설정을 확인하세요.', 'warning');
+                }
+            } catch (error) {
+                logMessage(`Claude 열기 실패: ${error.message}`, 'error');
+                showNotification('Claude를 열 수 없습니다. URL을 확인해주세요.', 'error');
+            }
+        }
+
+        // 테마 관련
+        function toggleTheme() {
+            currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            document.body.className = currentTheme === 'light' ? 'light-theme' : '';
+            
+            const themeButton = document.querySelector('.theme-toggle');
+            themeButton.textContent = currentTheme === 'light' ? '🌙' : '☀️';
+            
+            try {
+                localStorage.setItem('theme', currentTheme);
+            } catch (e) {
+                console.log('테마 저장 실패:', e);
+            }
+            showNotification(`${currentTheme === 'light' ? '라이트' : '다크'} 모드로 전환되었습니다.`, 'success');
+        }
+
+        function initTheme() {
+            try {
+                const savedTheme = localStorage.getItem('theme') || 'dark';
+                currentTheme = savedTheme;
+                
+                if (currentTheme === 'light') {
+                    document.body.className = 'light-theme';
+                    document.querySelector('.theme-toggle').textContent = '🌙';
+                }
+            } catch (e) {
+                console.log('테마 로드 실패:', e);
+            }
+        }
+
+        // 설정 저장/로드
+        function saveSettings() {
+            try {
+                const settings = {
+                    claudeUrl: elements.claudeUrl.value,
+                    splitSize: elements.splitSize.value,
+                    processingMode: elements.processingMode.value,
+                    analysisLevel: elements.analysisLevel.value,
+                    smartSplit: elements.smartSplit.checked,
+                    turboMode: elements.turboMode.checked,
+                    autoBrowser: elements.autoBrowser.checked,
+                    theme: currentTheme
+                };
+                
+                localStorage.setItem('kakaoUltraSettings', JSON.stringify(settings));
+            } catch (e) {
+                console.log('설정 저장 실패:', e);
+            }
+        }
+
+        function loadSettings() {
+            try {
+                const saved = localStorage.getItem('kakaoUltraSettings');
+                if (saved) {
+                    const settings = JSON.parse(saved);
+                    
+                    elements.claudeUrl.value = settings.claudeUrl || '';
+                    elements.splitSize.value = settings.splitSize || 2000;
+                    elements.splitSizeValue.textContent = settings.splitSize || 2000;
+                    elements.processingMode.value = settings.processingMode || 'single';
+                    elements.analysisLevel.value = settings.analysisLevel || 'detailed';
+                    elements.smartSplit.checked = settings.smartSplit !== false;
+                    elements.turboMode.checked = settings.turboMode || false;
+                    elements.autoBrowser.checked = settings.autoBrowser !== false;
+                }
+            } catch (error) {
+                console.log('설정 로드 실패:', error);
+            }
+        }
+
+        // 유틸리티 함수들
+        function updateProgress(percent) {
+            elements.progressBar.style.width = `${percent}%`;
+        }
+
+        function logMessage(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString('ko-KR');
+            const entry = document.createElement('div');
+            entry.className = `log-entry log-${type}`;
+            entry.innerHTML = `<span class="log-time">[${timestamp}]</span> ${message}`;
+            
+            elements.logOutput.appendChild(entry);
+            elements.logOutput.scrollTop = elements.logOutput.scrollHeight;
+        }
+
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `notification notification-${type}`;
+            
+            const icon = type === 'success' ? '✅' : type === 'error' ? '❌' : type === 'warning' ? '⚠️' : 'ℹ️';
+            notification.innerHTML = `<span>${icon}</span><span>${message}</span>`;
+            
+            document.getElementById('notificationContainer').appendChild(notification);
+            
+            setTimeout(() => notification.classList.add('show'), 100);
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+
+        function showLoading(show) {
+            elements.loadingOverlay.style.display = show ? 'flex' : 'none';
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        function formatDate(date) {
+            return date.toLocaleDateString('ko-KR', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit'
+            });
+        }
+
+        function formatDateForInput(date) {
+            const year = date.getFullYear();
+            const month = (date.getMonth() + 1).toString().padStart(2, '0');
+            const day = date.getDate().toString().padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function delay(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+    </script>
+</body>
+</html>
